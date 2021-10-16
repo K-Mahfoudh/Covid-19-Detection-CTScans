@@ -77,6 +77,7 @@ class Data:
 
         :return: dataloader tuple of training and validation sets
         """
+        print('loading data, Please waite.')
         # Loading the data from folder
         trainset = datasets.ImageFolder(self._train_path, transform=self._train_transform)
 
@@ -86,7 +87,7 @@ class Data:
         # Creating dataLoaders
         train_loader = torch.utils.data.DataLoader(trainset, batch_size=self._batch_size, sampler=train_sampler)
         valid_loader = torch.utils.data.DataLoader(trainset, batch_size=self._batch_size, sampler=valid_sampler)
-
+        print('Data loaded')
         return train_loader, valid_loader
 
     def get_testset(self):
@@ -95,12 +96,13 @@ class Data:
 
         :return: dataloader object containing test set
         """
+        print('loading data, Please waite.')
         # Loading data from folder
         testset = datasets.ImageFolder(self._test_path, transform=self._test_transform)
 
         # Creating dataLoader
         test_loader = torch.utils.data.DataLoader(testset, batch_size=self._batch_size, shuffle=self._shuffle)
-
+        print('Data loaded')
         return test_loader
 
     def train_valid_sampler(self, data):

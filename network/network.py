@@ -227,6 +227,8 @@ class Network(nn.Module):
             loss = loss / len(data)
             print('Accuracy is {:.3f}%'.format(accuracy))
             print('Loss is {:.3f}'.format(loss))
+
+        # Setting back the model to train mode
         self.model.train()
 
     def load_model(self):
