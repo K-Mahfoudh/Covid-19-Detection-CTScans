@@ -4,12 +4,15 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import sys
+import logging
+from logger import Logger
 
 
 class Network(nn.Module):
     """
     Neural network class.
     """
+
     def __init__(self, model_path, lr):
         """
         Class constructor.
@@ -89,104 +92,111 @@ class Network(nn.Module):
         train_accuracy_list = []
         valid_loss_list = []
         valid_accuracy_list = []
+        try:
+            for epoch in range(epochs):
+                print('Epoch {} Started\r'.format(epoch))
+                train_accuracy = 0
+                train_loss = 0
+                valid_accuracy = 0
+                valid_loss = 0
 
-        for epoch in range(epochs):
-            print('Epoch {} Started\r'.format(epoch))
-            train_accuracy = 0
-            train_loss = 0
-            valid_accuracy = 0
-            valid_loss = 0
+                # Enable training mode
+                if not self.model.train():
+                    self.model.train()
 
-            # Enable training mode
-            if not self.model.train():
-                self.model.train()
-
-            # training on train set
-            for index, (images, labels) in enumerate(trainset):
-                # Transferring images and labels to GPU if available
-                images, labels = images.to(self.device), labels.to(self.device)
-
-                # Reset gradients
-                self.optimizer.zero_grad()
-
-                # Forward pass
-                logps = self.forward(images)
-
-                # Calculating loss
-                loss = self.criterion(logps, labels)
-                train_loss += loss
-
-                sys.stdout.write('Train Batch {} ==> Loss: {:.3f}\r'.format(index, loss))
-                sys.stdout.flush()
-
-                # Backward propagation
-                loss.backward()
-
-                # Updating weights
-                self.optimizer.step()
-
-                # Getting predictions
-                preds = F.softmax(logps, dim=1)
-
-                # getting accuracy
-                _, top_classes = preds.topk(1, dim=1)
-                compare = top_classes == labels.view(*top_classes.shape)
-                train_accuracy += torch.mean(compare.type(torch.FloatTensor))
-
-            # Enable evaluation mode
-            if not self.model.eval():
-                self.model.eval()
-
-            # Testing on validation set
-            with torch.no_grad():
-                for index, (images, labels) in enumerate(validset):
-                    sys.stdout.write('Validation Batch {}\r'.format(index))
-                    sys.stdout.flush()
-                    # Transferring data to GPU if available
+                # training on train set
+                for index, (images, labels) in enumerate(trainset):
+                    # Transferring images and labels to GPU if available
                     images, labels = images.to(self.device), labels.to(self.device)
+
+                    # Reset gradients
+                    self.optimizer.zero_grad()
 
                     # Forward pass
                     logps = self.forward(images)
 
-                    # Calculating the loss
+                    # Calculating loss
                     loss = self.criterion(logps, labels)
-                    valid_loss += loss
+                    train_loss += loss
 
-                    # getting predictions
+                    sys.stdout.write('Train Batch {} ==> Loss: {:.3f}\r'.format(index, loss))
+                    sys.stdout.flush()
+
+                    # Backward propagation
+                    loss.backward()
+
+                    # Updating weights
+                    self.optimizer.step()
+
+                    # Getting predictions
                     preds = F.softmax(logps, dim=1)
+
+                    # getting accuracy
                     _, top_classes = preds.topk(1, dim=1)
                     compare = top_classes == labels.view(*top_classes.shape)
-                    valid_accuracy += torch.mean(compare.type(torch.FloatTensor))
+                    train_accuracy += torch.mean(compare.type(torch.FloatTensor))
 
-            # Getting overall accuracy and loss
-            train_accuracy = train_accuracy / len(trainset)
-            train_loss = train_loss / len(trainset)
-            valid_accuracy = valid_accuracy / len(validset)
-            valid_loss = valid_loss / len(validset)
+                # Enable evaluation mode
+                if not self.model.eval():
+                    self.model.eval()
 
-            # Appending loss and accuracy to lists for visualisation
-            train_accuracy_list.append(train_accuracy)
-            train_loss_list.append(train_loss)
-            valid_accuracy_list.append(valid_accuracy)
-            valid_loss_list.append(valid_loss)
+                # Testing on validation set
+                with torch.no_grad():
+                    for index, (images, labels) in enumerate(validset):
+                        sys.stdout.write('Validation Batch {}\r'.format(index))
+                        sys.stdout.flush()
+                        # Transferring data to GPU if available
+                        images, labels = images.to(self.device), labels.to(self.device)
 
-            # Checking for best model
-            if valid_loss < min_valid_loss:
-                print('Validation loss decreased from {:.3f} ======> {}\r'.format(min_valid_loss, valid_loss))
+                        # Forward pass
+                        logps = self.forward(images)
 
-                min_valid_loss = valid_loss
+                        # Calculating the loss
+                        loss = self.criterion(logps, labels)
+                        valid_loss += loss
 
-                # Saving the model
-                torch.save(self.model.state_dict(), self.model_path)
+                        # getting predictions
+                        preds = F.softmax(logps, dim=1)
+                        _, top_classes = preds.topk(1, dim=1)
+                        compare = top_classes == labels.view(*top_classes.shape)
+                        valid_accuracy += torch.mean(compare.type(torch.FloatTensor))
 
-            print(
-                'Epoch: {} =====>  Train Accuracy: {:.3f} ------ Train Loss: {:.3f} ------ Valid Accuracy: {:.3f} '
-                '------ Valid Loss: {:.3f} \r'.format(
-                    epochs,
-                    train_accuracy,
-                    train_loss,
-                    valid_accuracy,
-                    valid_loss))
+                # Getting overall accuracy and loss
+                train_accuracy = train_accuracy / len(trainset)
+                train_loss = train_loss / len(trainset)
+                valid_accuracy = valid_accuracy / len(validset)
+                valid_loss = valid_loss / len(validset)
+
+                # Appending loss and accuracy to lists for visualisation
+                train_accuracy_list.append(train_accuracy)
+                train_loss_list.append(train_loss)
+                valid_accuracy_list.append(valid_accuracy)
+                valid_loss_list.append(valid_loss)
+
+                # Checking for best model
+                if valid_loss < min_valid_loss:
+                    print('Validation loss decreased from {:.3f} ======> {}\r'.format(min_valid_loss, valid_loss))
+
+                    min_valid_loss = valid_loss
+
+                    # Saving the model
+                    torch.save(self.model.state_dict(), self.model_path)
+
+                print(
+                    'Epoch: {} =====>  Train Accuracy: {:.3f} ------ Train Loss: {:.3f} ------ Valid Accuracy: {:.3f} '
+                    '------ Valid Loss: {:.3f} \r'.format(
+                        epochs,
+                        train_accuracy,
+                        train_loss,
+                        valid_accuracy,
+                        valid_loss))
+        except Exception as err:
+            err_message = 'Exception class: ' +\
+                          str(err.__class__) +\
+                          ' -- Inside method: Network.train_network -- ' +\
+                          err.__str__()
+            logger = Logger('logs/error.log')
+            logger.log_error(err_message)
 
         return train_accuracy_list, train_loss_list, valid_accuracy_list, valid_loss_list
 
@@ -196,37 +206,40 @@ class Network(nn.Module):
 
         :param data: dataloader object containing test images.
         """
-        self.load_model()
-        if not self.model.eval():
-            self.model.eval()
-        with torch.no_grad():
-            self.model.to(self.device)
-            accuracy = 0
-            loss = 0
-            for images, labels in iter(data):
-                # Transferring data to gpu if available
-                images, labels = images.to(self.device), labels.to(self.device)
+        try:
+            self.load_model()
+            if not self.model.eval():
+                self.model.eval()
+            with torch.no_grad():
+                self.model.to(self.device)
+                accuracy = 0
+                loss = 0
+                for images, labels in iter(data):
+                    # Transferring data to gpu if available
+                    images, labels = images.to(self.device), labels.to(self.device)
+                    # Forward pass
+                    logps = self.forward(images)
+                    loss += self.criterion(logps, labels)
 
-                # Forward pass
-                logps = self.forward(images)
-                loss += self.criterion(logps, labels)
+                    # Getting predictions
+                    preds = F.softmax(logps, dim=1)
 
-                # Getting predictions
-                preds = F.softmax(logps, dim=1)
+                    # Calculating accuracy
+                    top_p, top_class = preds.topk(1, dim=1)
 
-                # Calculating accuracy
-                top_p, top_class = preds.topk(1, dim=1)
-                print(top_class.view(1, -1))
-                print(top_p.view(1, -1))
-
-                compare = top_class == labels.view(*top_class.shape)
-                print(compare.view(1, -1))
-                print(torch.mean(compare.type(torch.FloatTensor)).view(1, -1))
-                accuracy += torch.mean(compare.type(torch.FloatTensor))
-            accuracy = accuracy / len(data) * 100
-            loss = loss / len(data)
-            print('Accuracy is {:.3f}%'.format(accuracy))
-            print('Loss is {:.3f}'.format(loss))
+                    compare = top_class == labels.view(*top_class.shape)
+                    accuracy += torch.mean(compare.type(torch.FloatTensor))
+                accuracy = accuracy / len(data) * 100
+                loss = loss / len(data)
+                print('Accuracy is {:.3f}%'.format(accuracy))
+                print('Loss is {:.3f}'.format(loss))
+        except RuntimeError as err:
+            err_message = 'Exception class: ' +\
+                          str(err.__class__) +\
+                          ' -- Inside method: Network.predict -- ' +\
+                          err.__str__()
+            logger = Logger('logs/error.log')
+            logger.log_error(err_message)
 
         # Setting back the model to train mode
         self.model.train()

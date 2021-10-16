@@ -67,7 +67,7 @@ def argument_parser(argv):
                              'data or not.')
     parser.add_argument('--model_path',
                         type=str,
-                        default='models/model5.pth',
+                        default='models/Resnext_model_01_06_1.pth',
                         help='Path used to save the model while training, or to load an existent model for testing')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate to be used in training')
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs used to train the model')
