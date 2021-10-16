@@ -74,4 +74,4 @@ to check the project's style. It is best if you follow the "fork-and-pull" Git w
 a new issue in case of any major changes.
 
 ## License
-[MIT](README.md)
+[MIT](https://github.com/K-Mahfoudh/Covid-19-Detection-CTScans/blob/main/LICENSE.md)
