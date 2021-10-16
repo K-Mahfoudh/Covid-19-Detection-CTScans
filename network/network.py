@@ -14,8 +14,8 @@ class Network(nn.Module):
         """
         Class constructor.
 
-        :param model_path: path for saving/loading the model
-        :param lr: initial learning rate to be used in training
+        :param model_path: string path for saving/loading the model
+        :param lr: float value representing initial learning rate to be used in training
         """
         super(Network, self).__init__()
         self.model = models.resnext101_32x8d(pretrained=True, progress=True)
@@ -46,7 +46,7 @@ class Network(nn.Module):
         Setting the optimizer to be used in training.
 
         :param optimizer: Adam or SGD (but can be modified to use other optimizers)
-        :param lr: learning rate to be used in training
+        :param lr: float value representing the learning rate to be used in training
         """
         if optimizer == 'SGD':
             self.optimizer = optim.SGD(self.model.fc.parameters(), lr=lr)
@@ -59,7 +59,7 @@ class Network(nn.Module):
         """
         A method for doing forward propagation in the neural network.
 
-        :param data: dataloader that will be used to train the model
+        :param data: dataloader object that will be used to train the model
         :return: log probabilities resulting from forward propagations (LogSoftmax function)
         """
         return self.model(data)
@@ -73,9 +73,9 @@ class Network(nn.Module):
         best (minimum) loss. Note that the program will train the model using GPU if it supports cuda, otherwise,
         it will use CPU.
 
-        :param trainset: dataloader containing training images
-        :param validset: dataloader containing validation images
-        :param epochs: number of training epochs
+        :param trainset: dataloader object containing training images
+        :param validset: dataloader object containing validation images
+        :param epochs: integer representing number of training epochs
         :return: 4 lists containing history of loss and accuracy of both training and validation steps
         """
         # Transferring model to GPU if cuda is available
@@ -194,7 +194,7 @@ class Network(nn.Module):
         """
         A method used to predict the labels of given images, and print accuracy and loss.
 
-        :param data: dataloader containing test images.
+        :param data: dataloader object containing test images.
         """
         self.load_model()
         if not self.model.eval():
