@@ -3,3 +3,5 @@
 *.jpg
 .idea/
 models/
+network/__pycache__/*
+data/__pycache__/*
